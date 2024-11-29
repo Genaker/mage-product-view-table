@@ -1,0 +1,16 @@
+{
+    "name": "mage/product-view",
+    "description": "Magento 2 module to Create Prodcut View Flat table ",
+    "require": {
+        "mage/db2": "^1",
+        "mage/view-table": "^1"
+    },
+    "type": "magento2-module",
+    "autoload": {
+        "psr-4": {
+            "Mage\\ProductView\\": ""
+        }
+    },
+    "version": "1.0.4",
+    "minimum-stability": "stable"
+}
