@@ -3,7 +3,6 @@
 namespace Mage\ProductView\Setup;
 
 use Illuminate\Database\Schema\Blueprint;
-use Magento\Framework\Setup\InstallSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
 use Mage\DB2\DB2 as DB;
@@ -13,6 +12,7 @@ class Recurring extends ViewTableCreate
 {
 
     public $viewName = "catalog_product_view";
+    public $changeLogTableName = "catalog_product_attribute_cl";
     const PRODUCT_TYPE_ID = 4;
 
     public function getSelect($join = false)
@@ -29,7 +29,7 @@ class Recurring extends ViewTableCreate
                     ->orWhere('catalog_eav_attribute.is_html_allowed_on_front', 1);
             })
             ->select('*')
-        //->limit(100) // Limit to 100 results
+        //->limit(100)
             ->get();
 
         $query = DB::table('catalog_product_entity AS p')
@@ -72,40 +72,41 @@ class Recurring extends ViewTableCreate
         }
         //echo $query->toSql();
         return $query->toSql();
-        die();
     }
 
-    public function populateProductJsonTableFromView()
+    public function populateProductJsonTableFromView($changeLog = false)
     {
         //DB::connection()->enableQueryLog();
         $timeStart = microtime(true);
         // Fetch data from the product view
-        DB::table('catalog_product_view')
-            ->orderBy('product_id') // Ensure consistent order (adjust based on your view structure)
-            ->chunk(10, function ($rows) {
-                $insertData = $rows->map(function ($row) {
-                    return [
-                        'id' => $row->product_id,
-                        'entity_id' => $row->product_id, // Assuming `id` is the product identifier
-                        'sku' => $row->sku, // Product SKU
-                        'data' => json_encode($row), // Convert entire row to JSON
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ];
-                })->toArray();
-                try {
-                    // Insert chunked data into the product_json table
-                    DB::table('product_json')->upsert($insertData, ['product_id'], ['data', 'updated_at']);
-                } catch (\Exception $e) {
-
-                }
-            });
+        $query = DB::table('catalog_product_view AS cpv')
+            ->orderBy('product_id'); // Ensure consistent order (adjust based on your view structure)
+        if ($changeLog) {
+            // When new product created we can use: catalog_product_price_cl or created at
+            $query->rightJoin('catalog_product_attribute_cl AS cpac', 'cpv.entity_id', '=', 'cpac.entity_id');
+        }
+        $query->chunk(100, function ($rows) {
+            $insertData = $rows->map(function ($row) {
+                return [
+                    'id' => $row->product_id,
+                    'entity_id' => $row->product_id, // Assuming `id` is the product identifier
+                    'sku' => $row->sku, // Product SKU
+                    'data' => json_encode($row), // Convert entire row to JSON
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ];
+            })->toArray();
+            $startTime = microtime(true);
+            // Insert chunked data into the product_json table
+            DB::table('product_json')->upsert($insertData, ['product_id'], ['data', 'updated_at']);
+            $endTime = microtime(true);
+        });
         // Retrieve and print the query log
         //$queryLog = DB::connection()->getQueryLog();
         //print_r($queryLog);
         $timeEnd = microtime(true);
         // DB::flushQueryLog()
-        echo $timeEnd - $timeStart;
+
     }
 
     public function jsonProductTableCreate()
@@ -127,7 +128,6 @@ class Recurring extends ViewTableCreate
     {
         parent::install($setup, $context);
         $this->jsonProductTableCreate();
-        $this->populateProductJsonTableFromView();
+        //$this->populateProductJsonTableFromView();
     }
-
 }
