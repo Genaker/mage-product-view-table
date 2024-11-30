@@ -41,7 +41,7 @@ class Pview extends Command
 
         // Create View
         $startTime = microtime(true);
-        $output->writeln("<success>Crete VIEW TABLE</success>");
+        $output->writeln("<success>Create VIEW TABLE</success>");
         DB::statement($this->setup->dropViewSQL());
         DB::statement($this->setup->createViewTableFromSelect());
         $endTime = microtime(true);
@@ -70,7 +70,7 @@ class Pview extends Command
         $product = ProductView::selectRaw('SQL_NO_CACHE *')->first();
         $endTime = microtime(true);
         $executionTime = $endTime - $startTime;
-        $output->writeln("Load Product data from View using Model: <ok>" . $executionTime . ' </ok>');
+        $output->writeln("Load Product data from View using Eloquent Model: <ok>" . $executionTime . ' </ok>');
         $startTime = microtime(true);
         $product = DB::table(DB::raw('catalog_product_view'))->select(DB::raw('SQL_NO_CACHE *'))->limit(1)->get();
         $endTime = microtime(true);
@@ -81,7 +81,7 @@ class Pview extends Command
         $endTime = microtime(true);
         $executionTime = $endTime - $startTime;
         //dump($product);
-        $output->writeln("Load Product data from MView table: <ok>" . $executionTime . ' </ok>');
+        $output->writeln("Load Product data from MView(Materialized View) table: <ok>" . $executionTime . ' </ok>');
         $startTime = microtime(true);
         $product = DB::table(DB::raw('product_json'))->select(DB::raw('SQL_NO_CACHE *'))->limit(1)->get();
         $productJsonData = json_decode($product[0]->data);
