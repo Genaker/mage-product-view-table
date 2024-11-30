@@ -50,7 +50,7 @@ class Pview extends Command
 
         // Create MVIEW table
         $startTime = microtime(true);
-        $output->writeln("<success>Create MVIEW table</success>");
+        $output->writeln("<success>Create MVIEW TABLE</success>");
         $this->setup->createTableFromView();
         $this->setup->populateTableFromView($this->setup->newTableName);
         $endTime = microtime(true);
@@ -64,7 +64,7 @@ class Pview extends Command
         $this->setup->populateProductJsonTableFromView();
         $endTime = microtime(true);
         $executionTime = $endTime - $startTime;
-        $output->writeln("END Product Json table populate time: <ok>" . $executionTime . ' </ok>');
+        $output->writeln("END Product JSON table populate time: <ok>" . $executionTime . ' </ok>');
         $output->writeln("<success>TEST:</success>");
         $startTime = microtime(true);
         $product = ProductView::selectRaw('SQL_NO_CACHE *')->first();

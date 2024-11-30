@@ -74,6 +74,11 @@ class Recurring extends ViewTableCreate
         return $query->toSql();
     }
 
+    /**
+     * Populate Json table with the product attribute data from the view table 
+     * 
+     * @param bool $changeLog - generate data from change log only. By default false - entire table regenerte 
+     */
     public function populateProductJsonTableFromView($changeLog = false)
     {
         //DB::connection()->enableQueryLog();
