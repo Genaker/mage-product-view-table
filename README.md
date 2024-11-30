@@ -15,14 +15,14 @@ Command Output: </br>
 By running this code *populateProductJsonTableFromView($changeLog = false)* with the **true** parameter, you are generating data only for change log data 
 
 Tables will be generated:
-- **catalog_product_view** : it is a view, not a table. Contains direct SQL to the core magento tables. Update mechanism **not** required however, has performace of the raw queries 
+- **catalog_product_view** : it is a view, not a table. Runs direct SQL to the core magento tables. Update mechanism **not** required however, has performace of the raw queries 
 
 <img width="436" alt="image" src="https://github.com/user-attachments/assets/31770dc4-3c81-4a3b-895f-205d62b2cf89">
 
-- **catalog_product_view_MVIEW** : materialized view table from the view table. Update mechanism is required
+- **catalog_product_view_MVIEW** : materialized view table from the view table. An update mechanism is required
 
 <img width="436" alt="image" src="https://github.com/user-attachments/assets/e0218e36-0870-476b-be57-a32a5faf461b">
 
-- **product_json** : table with the denormilised json attribute data in the *data* field. Update mechanism is also required
+- **product_json** : table with the denormilised json attribute data in the *data* field. An update mechanism is also required
 
 <img width="436" alt="image" src="https://github.com/user-attachments/assets/b751ebad-7022-456c-a095-5b0969385cda">
