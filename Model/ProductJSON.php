@@ -3,14 +3,14 @@ namespace Mage\ProductView\Model;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ProductView extends Model
+class ProductJSON extends Model
 {
     /**
      * The table associated with the model.
      *
      * @var string
      */
-    protected $table = 'catalog_product_view';
+    protected $table = 'product_json';
 
     /**
      * Indicates if the model should be timestamped.
@@ -40,6 +40,10 @@ class ProductView extends Model
      */
     protected $keyType = 'int';
 
+    protected $casts = [
+        'attributes' => 'array', //or 'json' ->object, 
+    ];
+
     /**
      * Get a product by SKU.
      *
@@ -50,22 +54,4 @@ class ProductView extends Model
     {
         return self::connection()->where('sku', $sku)->first();
     }
-
-    /**
-     * Set the table for store dynamically.
-     *
-     * @param int $storeId
-     * @return void
-     */
-    public function fromStore($storeId = 0)
-    {
-        $this->setTable('catalog_product_view_' . $storeId);
-        return $this;
-    }
-
-    public function new ()
-    {
-        return clone $this;
-    }
-
 }

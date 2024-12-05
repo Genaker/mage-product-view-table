@@ -10,6 +10,7 @@ namespace Mage\ProductView\Console\Command;
 use Magento\Catalog\Model\ProductRepository;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
 use Mage\DB2\DB2 as DB;
+use Mage\ProductView\Model\ProductJSON;
 use Mage\ProductView\Model\ProductView;
 use Mage\ProductView\Setup\Recurring;
 use Symfony\Component\Console\Command\Command;
@@ -39,56 +40,79 @@ class Pview extends Command
         $blueStyle = new OutputFormatterStyle('blue', null, ['bold']);
         $output->getFormatter()->setStyle('ok', $blueStyle);
 
-        // Create View
-        $startTime = microtime(true);
-        $output->writeln("<success>Create VIEW TABLE</success>");
-        DB::statement($this->setup->dropViewSQL());
-        DB::statement($this->setup->createViewTableFromSelect());
-        $endTime = microtime(true);
-        $executionTime = $endTime - $startTime;
-        $output->writeln("Create View Table time: <ok>" . $executionTime . ' </ok>');
+        if (false) {
+            // Create View
+            $startTime = microtime(true);
+            $output->writeln("<success>Create VIEW TABLE 0</success>");
+            DB::statement($this->setup->dropViewSQL(0));
+            DB::statement($this->setup->createViewTableFromSelect(0));
+            $endTime = microtime(true);
+            $executionTime = $endTime - $startTime;
+            $output->writeln("Create View Table 0 time: <ok>" . $executionTime . ' </ok>');
+            $output->writeln("<success>Create VIEW TABLE 1</success>");
+            DB::statement($this->setup->dropViewSQL(1));
+            DB::statement($this->setup->createViewTableFromSelect(1));
+            $endTime = microtime(true);
+            $executionTime = $endTime - $startTime;
+            $output->writeln("Create View Table 1 time: <ok>" . $executionTime . ' </ok>');
 
-        // Create MVIEW table
-        $startTime = microtime(true);
-        $output->writeln("<success>Create MVIEW TABLE</success>");
-        $this->setup->createTableFromView();
-        $this->setup->populateTableFromView($this->setup->newTableName);
-        $endTime = microtime(true);
-        $executionTime = $endTime - $startTime;
-        $output->writeln("Create MVIEW time: <ok>" . $executionTime . ' </ok>');
+            // Create MVIEW table
+            $startTime = microtime(true);
+            $output->writeln("<success>Create MVIEW TABLE</success>");
+            $this->setup->createTableFromView(0, true);
+            $this->setup->populateTableFromView(0);
+            $this->setup->createTableFromView(1, true);
+            $this->setup->populateTableFromView(1);
+            $endTime = microtime(true);
+            $executionTime = $endTime - $startTime;
+            $output->writeln("Create MVIEW time: <ok>" . $executionTime . ' </ok>');
 
-        $this->setup->jsonProductTableCreate();
+            $startTime = microtime(true);
+            $output->writeln("<success>Start Product Json table populate</success>");
+            $this->setup->jsonProductTableCreate(true);
+            $this->setup->populateProductJsonTableFromView([0, 1]);
+            $endTime = microtime(true);
+            $executionTime = $endTime - $startTime;
+            $output->writeln("END Product JSON table populate time: <ok>" . $executionTime . ' </ok>');
+        }
 
-        $startTime = microtime(true);
-        $output->writeln("<success>Start Product Json table populate</success>");
-        $this->setup->populateProductJsonTableFromView();
-        $endTime = microtime(true);
-        $executionTime = $endTime - $startTime;
-        $output->writeln("END Product JSON table populate time: <ok>" . $executionTime . ' </ok>');
         $output->writeln("<success>TEST:</success>");
         $startTime = microtime(true);
-        $product = ProductView::selectRaw('SQL_NO_CACHE *')->first();
+        DB::init();
+        $product = (new ProductView())->fromStore(1)->selectRaw('SQL_NO_CACHE *')->first();
         $endTime = microtime(true);
         $executionTime = $endTime - $startTime;
         $output->writeln("Load Product data from View using Eloquent Model: <ok>" . $executionTime . ' </ok>');
+
         $startTime = microtime(true);
-        $product = DB::table(DB::raw('catalog_product_view'))->select(DB::raw('SQL_NO_CACHE *'))->limit(1)->get();
+        $product = (new ProductJSON())->selectRaw('SQL_NO_CACHE * ')->where('store_id', '=', 1)->limit(1)->get();
+        //dump($product->attributes);
+        $endTime = microtime(true);
+        $executionTime = $endTime - $startTime;
+        $output->writeln("Load Product data from JSON using Eloquent Model: <ok>" . $executionTime . ' </ok>');
+
+        $startTime = microtime(true);
+        $product = DB::table(DB::raw('catalog_product_view_0'))->select(DB::raw('SQL_NO_CACHE *'))->limit(1)->get();
         $endTime = microtime(true);
         $executionTime = $endTime - $startTime;
         $output->writeln("Load Product data from View table: <ok>" . $executionTime . ' </ok>');
+
         $startTime = microtime(true);
         $product = DB::table(DB::raw('catalog_product_view_MVIEW'))->select(DB::raw('SQL_NO_CACHE *'))->limit(1)->get();
         $endTime = microtime(true);
         $executionTime = $endTime - $startTime;
         //dump($product);
         $output->writeln("Load Product data from MView(Materialized View) table: <ok>" . $executionTime . ' </ok>');
+
         $startTime = microtime(true);
-        $product = DB::table(DB::raw('product_json'))->select(DB::raw('SQL_NO_CACHE *'))->limit(1)->get();
-        $productJsonData = json_decode($product[0]->data);
+        $product = DB::table(DB::raw('product_json'))->select(DB::raw('SQL_NO_CACHE *'))->where('store_id', '=', 1)->limit(1)->get();
+        $product[0]->attributes = json_decode($product[0]->attributes);
+        //dump($product);
         $endTime = microtime(true);
         $executionTime = $endTime - $startTime;
         //dump($productJsonData);
         $output->writeln("Load Product data from JSON table: <ok>" . $executionTime . ' </ok>');
+
         $startTime = microtime(true);
         $collection = $this->productCollectionFactory->create();
 
