@@ -128,7 +128,7 @@ class Recurring extends ViewTableCreate
             $query->chunk(100, function ($rows) {
                 $insertData = $rows->map(function ($row) {
                     return [
-                        'id' => $row->product_id,
+                        //'id' => $row->product_id, #this field is auto increment and not needed
                         'entity_id' => $row->product_id,
                         'sku' => $row->sku,
                         'store_id' => $row->store_id,
@@ -141,7 +141,7 @@ class Recurring extends ViewTableCreate
                 // Insert chunked data into the product_json table
                 // MariaDB and MySQL database drivers ignore the second argument of the upsert method 
                 // and always use the "primary" and "unique" indexes of the table to detect existing records. 
-                DB::table('product_json')->upsert($insertData, ['keys'], ['attributes', 'updated_at']);
+                DB::table('product_json')->upsert($insertData, uniqueBy: ['sku', 'store_id'], update: ['attributes', 'updated_at']);
                 $endTime = microtime(true);
             });
             // Retrieve and print the query log
@@ -163,15 +163,15 @@ class Recurring extends ViewTableCreate
                 $table->unsignedBigInteger('entity_id'); // Reference to product ID
                 $table->string('sku');
                 $table->unsignedTinyInteger('store_id');
+                $table->index('store_id');
                 // Create a unique composite index on both sku and store_id
                 $table->unique(['sku', 'store_id'], 'unique_sku_store_id');
-                $table->unique(['store_id']);
                 $table->unique(['entity_id', 'store_id'], 'unique_entity_id_store_id');
                 $table->jsonb('attributes'); // JSONB column for searchable product data
                 $table->timestamps(); // Created and updated timestamps
             });
         } catch (\Exception $e) {
-            // DO nothing
+            throw $e;
         }
     }
 
